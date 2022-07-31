@@ -1,3 +1,4 @@
+import torch
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
 import pandas as pd
@@ -15,7 +16,7 @@ for i in df.columns:
 df['Total_Year'] = dt.now().year - df['YearBuilt']
 # delete YearBuilt
 df.drop('YearBuilt', axis=1, inplace=True)
-print(df.head())
+# print(df.head())
 
 # Use LabelEncoder to convert cat_features into 0 ...n_classes - 1
 cat_features = ["MSSubClass", "MSZoning", "Street", "LotShape"]
@@ -25,4 +26,14 @@ for features in cat_features:
     lbl_encoders[features] = LabelEncoder()
     df[features] = lbl_encoders[features].fit_transform(df[features])
 
-print(df.head())
+# print(df.head())
+
+# Stacking cat_features
+
+cat_features = np.stack(
+    [df['MSSubClass'], df['MSZoning'], df['Street'], df['LotShape']], 1)
+
+# Convert cat_features_numpy into tensors
+cat_features = torch.tensor(cat_features, dtype=torch.int64)
+print(cat_features[:5])
+print(cat_features.dtype)
