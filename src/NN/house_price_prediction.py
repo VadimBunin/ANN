@@ -45,4 +45,9 @@ for i in df.columns:
     else:
         cont_features.append(i)
 
-print(cont_features)
+# Stack cont_features
+cont_values = np.stack([df[i].values for i in cont_features], 1)
+
+# Convert cont_values into tensors
+cont_values = torch.tensor(cont_values, dtype=torch.float)
+print(cont_values.dtype)
