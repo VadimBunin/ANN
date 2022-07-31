@@ -35,5 +35,14 @@ cat_features = np.stack(
 
 # Convert cat_features_numpy into tensors
 cat_features = torch.tensor(cat_features, dtype=torch.int64)
-print(cat_features[:5])
-print(cat_features.dtype)
+
+# Create continuos features
+cont_features = []
+
+for i in df.columns:
+    if i in ["MSSubClass", "MSZoning", "Street", "LotShape", "SalePrice"]:
+        pass
+    else:
+        cont_features.append(i)
+
+print(cont_features)
