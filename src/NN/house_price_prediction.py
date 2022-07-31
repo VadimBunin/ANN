@@ -1,3 +1,4 @@
+from sklearn.preprocessing import LabelEncoder
 import numpy as np
 import pandas as pd
 from datetime import datetime as dt
@@ -14,4 +15,14 @@ for i in df.columns:
 df['Total_Year'] = dt.now().year - df['YearBuilt']
 # delete YearBuilt
 df.drop('YearBuilt', axis=1, inplace=True)
+print(df.head())
+
+# Use LabelEncoder to convert cat_features into 0 ...n_classes - 1
+cat_features = ["MSSubClass", "MSZoning", "Street", "LotShape"]
+out_feature = "SalePrice"
+lbl_encoders = {}
+for features in cat_features:
+    lbl_encoders[features] = LabelEncoder()
+    df[features] = lbl_encoders[features].fit_transform(df[features])
+
 print(df.head())
