@@ -50,4 +50,8 @@ cont_values = np.stack([df[i].values for i in cont_features], 1)
 
 # Convert cont_values into tensors
 cont_values = torch.tensor(cont_values, dtype=torch.float)
-print(cont_values.dtype)
+
+# Create Dependent Feature
+y = torch.tensor(df['SalePrice'].values, dtype=torch.float).reshape(-1, 1)
+print(y)
+print(y.ndim)
