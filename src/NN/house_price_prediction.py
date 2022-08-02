@@ -1,4 +1,6 @@
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
 import pandas as pd
@@ -53,5 +55,29 @@ cont_values = torch.tensor(cont_values, dtype=torch.float)
 
 # Create Dependent Feature
 y = torch.tensor(df['SalePrice'].values, dtype=torch.float).reshape(-1, 1)
-print(y)
-print(y.ndim)
+
+# Appendix A: Create Embedding Size for Categorical Columns
+cat_featuresz = cat_features[:4]
+print(cat_featuresz)
+# compute numbers of the unique values for every cat_columns
+cat_dims = [len(df[col].unique())
+            for col in ["MSSubClass", "MSZoning", "Street", "LotShape"]]
+# print(cat_dims)
+# compute outpute dims of the embedding
+embedding_dim = [(x, min(50, (x+1)//2)) for x in cat_dims]
+# print(embedding_dim)
+
+embed_representation = nn.ModuleList(
+    [nn.Embedding(inp, out) for inp, out in embedding_dim])
+# print(embed_representation)
+
+
+embed_val = []
+
+for i, e in enumerate(embed_representation):
+    embed_val.append(e(cat_featuresz[:, i]))
+
+print(embed_val)
+
+z = torch.cat(embed_val, 1)
+print(z)
