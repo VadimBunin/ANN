@@ -1,3 +1,4 @@
+from asyncio import windows_events
 import time
 import torch
 import torch.nn as nn
@@ -12,90 +13,43 @@ import kit
 x = torch.linspace(0, 799, steps=800)
 y = torch.sin(x*2*3.1416/40)
 
-# plt.figure(figsize=(12, 4))
-# plt.xlim(-10, 801)
+#plt.figure(figsize=(12, 4))
+#plt.xlim(-10, 810)
 # plt.grid(True)
-# plt.plot(y.numpy(), c='r', ls=':', lw=3)
+#plt.plot(y.numpy(), c='b', lw=2)
 # plt.show()
 
-# Create train and test sets
-test_size = 40
+"""Create a train and test sets"""
+test_size = int(len(y)*.15)
 train_set = y[:-test_size]
 test_set = y[-test_size:]
-# Load the data
-window_size = 40
-train_data = kit.input_data(train_set, window_size)
+
+"""Prepare the training data"""
+"""
+When working with LSTM models,
+we start by dividing the training sequence into a series of overlapping "windows".
+Each window consists of a connected string of samples.
+The label used for comparison is equal to the next value in the sequence.
+In this way our network learns what value should follow a given pattern of preceding values.
+Note: although the LSTM layer produces a prediction for each sample in the window, we only care about the last one.
+"""
+"""we'll define a function called input_data that builds a list of (seq, label) tuples.
+Windows overlap, so the first tuple might contain  ([𝑥1,..,𝑥5],[𝑥6]) ,
+the second would have  ([𝑥2,..,𝑥6],[𝑥7]) , etc.
+Here  𝑘  is the width of the window. Due to the overlap,
+we'll have a total number of (seq, label) tuples equal to  len(𝑠𝑒𝑟𝑖𝑒𝑠)−𝑘"""
 
 
-class LSTM(nn.Module):
-    def __init__(self, input_size=1, hidden_size=50, out_size=1):
-        super().__init__()
-        self.hidden_size = hidden_size
+def input_data(seq, ws):
+    out = []
+    L = len(seq)
 
-        # Add an LSTM layer:
-        self.lstm = nn.LSTM(input_size, hidden_size)
-
-        # Add a fully-connected layer:
-        self.linear = nn.Linear(hidden_size, out_size)
-
-        # Initialize h0 and c0:
-        self.hidden = (torch.zeros(1, 1, hidden_size),
-                       torch.zeros(1, 1, hidden_size))
-
-    def forward(self, seq):
-        lstm_out, self.hidden = self.lstm(
-            seq.view(len(seq), 1, 1), self.hidden)
-        pred = self.linear(lstm_out.view(len(seq), -1))
-        return pred[-1]   # we only care about the last predic
+    for i in range(L-ws):
+        window = seq[i:i+ws]
+        label = seq[i+ws:i+ws+1]
+        out.append((window, label))
+    return out
 
 
-torch.manual_seed(42)
-model = LSTM()
-criterion = nn.MSELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
-
-print(model)
-
-
-epochs = 7
-window_size = 40
-future = 40
-
-# Create the full set of sequence/label tuples:
-all_data = kit.input_data(y, window_size)
-len(all_data)  # this should equal 800-40
-
-start_time = time.time()
-
-for i in range(epochs):
-    for seq, label in all_data:
-        # reset the parameters and hidden states
-
-        optimizer.zero_grad()
-        model.hidden = (torch.zeros(1, 1, model.hidden_size),
-                        torch.zeros(1, 1, model.hidden_size))
-        y_pred = model(seq)
-        loss = criterion(y_pred, label)
-        loss.backward()
-        optimizer.step()
-    # print training result
-    print(f'Epoch: {i+1:2} Loss: {loss.item():10.8f}')
-
-print(f'\nDuration: {time.time() - start_time:.0f} seconds')
-
-preds = y[-window_size:].tolist()
-
-for i in range(future):
-    seq = torch.FloatTensor(preds)
-    with torch.no_grad():
-        # Reset the hidden parameters
-        model.hidden = (torch.zeros(1, 1, model.hidden_size),
-                        torch.zeros(1, 1, model.hidden_size))
-        preds.append(model(seq).item())
-
-plt.figure(figsize=(12, 4))
-plt.xlim(-10, 841)
-plt.grid(True)
-plt.plot(y.numpy())
-plt.plot(range(800, 800+future), preds[window_size:])
-plt.show()
+k = 40
+print(input_data(train_set, k)[:2])
