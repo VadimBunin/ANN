@@ -3,6 +3,7 @@ import time
 from turtle import forward
 import torch
 import torch.nn as nn
+import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas as pd
@@ -14,10 +15,10 @@ import kit
 x = torch.linspace(0, 799, steps=800)
 y = torch.sin(x*2*3.1416/40)
 
-#plt.figure(figsize=(12, 4))
-#plt.xlim(-10, 810)
+# plt.figure(figsize=(12, 4))
+# plt.xlim(-10, 810)
 # plt.grid(True)
-#plt.plot(y.numpy(), c='b', lw=2)
+# plt.plot(y.numpy(), c='b', lw=2)
 # plt.show()
 
 """Create a train and test sets"""
@@ -87,54 +88,29 @@ class LSTM(nn.Module):
         return pred[-1]
 
 
-torch.manual_seed(42)
 model = LSTM()
 criterion = nn.MSELoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
 
-print(model)
-
-
-epochs = 5
-future = 40
+epochs = 150
+losses = []
+future = 40  # forcast 40 points in to future
 
 for i in range(epochs):
-
-    # tuple-unpack the train_data set
     for seq, y_train in train_data:
-
-        # reset the parameters and hidden states
         optimizer.zero_grad()
-        model.hidden = (torch.zeros(1, 1, model.hidden_size),
-                        torch.zeros(1, 1, model.hidden_size))
-
-        y_pred = model(seq)
-
-        loss = criterion(y_pred, y_train)
-        loss.backward()
-        optimizer.step()
+        model.hidden = (torch.zeros(model.num_layers, model.batch_size, model.hidden_size),
+                        torch.zeros(model.num_layers, model.batch_size, model.hidden_size))
+    y_pred = model(seq)
+    loss = criterion(y_pred, y_train)
+    losses.append(loss.item())
+    loss.backward()
+    optimizer.step()
 
     # print training result
     print(f'Epoch: {i+1:2} Loss: {loss.item():10.8f}')
 
-# MAKE PREDICTIONS
-    # start with a list of the last 10 training records
-    preds = train_set[-k:].tolist()
-
-    for f in range(future):
-        seq = torch.FloatTensor(preds[-k:])
-        with torch.no_grad():
-            model.hidden = (torch.zeros(1, 1, model.hidden_size),
-                            torch.zeros(1, 1, model.hidden_size))
-            preds.append(model(seq).item())
-
-    loss = criterion(torch.tensor(preds[-k:]), y[760:])
-    print(f'Loss on test predictions: {loss}')
-
-    # Plot from point 700 to the end
-    plt.figure(figsize=(12, 4))
-    plt.xlim(700, 801)
-    plt.grid(True)
-    plt.plot(y.numpy())
-    plt.plot(range(760, 800), preds[k:])
-    plt.show()
+plt.plot(range(epochs), losses)
+plt.ylabel('RMSE Loss')
+plt.xlabel('epoch')
+plt.show()
