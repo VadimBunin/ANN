@@ -110,7 +110,8 @@ for i in range(epochs):
     # print training result
     print(f'Epoch: {i+1:2} Loss: {loss.item():10.8f}')
 
-plt.plot(range(epochs), losses)
-plt.ylabel('RMSE Loss')
-plt.xlabel('epoch')
-plt.show()
+##plt.plot(range(epochs), losses)
+#plt.ylabel('RMSE Loss')
+# plt.xlabel('epoch')
+# plt.show()
+"""Forecasting into an unknown future"""
